@@ -21,13 +21,15 @@ jobs:
         with:
           java-version: '25'
           distribution: 'temurin'
-          cache: 'maven'
+          cache: maven
           server-id: github
           server-username: GITHUB_USER
           server-password: GITHUB_TOKEN
 
-      - name: Build jar (downloads proto-test-lib from GitHub Packages)
-        run: mvn -B -DskipTests clean package
+      - name: Build image with Spring Boot Buildpacks
+        run: |
+          mvn -B -DskipTests clean spring-boot:build-image \
+            -Dspring-boot.build-image.imageName=ghcr.io/nullnonamenull/proto-test-producer:latest
         working-directory: ./proto-test-producer
         env:
           GITHUB_USER: nullnonamenull
@@ -40,12 +42,5 @@ jobs:
           username: nullnonamenull
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build & push image
-        uses: docker/build-push-action@v6
-        with:
-          context: ./proto-test-producer
-          file: ./proto-test-producer/Dockerfile
-          push: true
-          tags: |
-            ghcr.io/nullnonamenull/proto-test-producer:latest
-            ghcr.io/nullnonamenull/proto-test-producer:${{ github.sha }}
+      - name: Push image
+        run: docker push ghcr.io/nullnonamenull/proto-test-producer:latest
